@@ -68,7 +68,7 @@ jobs:
       - name: Validate Packer script
         run: packer validate bounce.pkr.hcl
       - name: Create GCP authentication key.json
-        run: echo -ne "$CREDENTIALS" > key.json
+        run: echo $CREDENTIALS | base64 --decode > key.json
       - name: Build Packer image
         env:
           GOOGLE_APPLICATION_CREDENTIALS: key.json
