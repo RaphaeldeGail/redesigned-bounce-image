@@ -89,7 +89,7 @@ jobs:
       TF_IN_AUTOMATION: "true"
       TF_INPUT: 0
       #TF_LOG: "debug"
-      GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
+      CREDENTIALS: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
     steps:
       - name: Checkout terraform code
         uses: actions/checkout@v3
@@ -108,14 +108,21 @@ jobs:
         env:
           BACKEND_CONFIG: ${{ secrets.TF_BACKEND_CONFIG }}
         run: |
-          echo "$BACKEND_CONFIG" > config.bucket.tfbackend
+          echo $BACKEND_CONFIG | base64 --decode > config.bucket.tfbackend
+      - name: Create GCP authentication key.json
+        run: echo $CREDENTIALS | base64 --decode > key.json
       - name: Initialize Terraform working directory
+        env:
+          GOOGLE_CREDENTIALS: key.json
         run: terraform init -reconfigure -no-color -backend-config=config.bucket.tfbackend
       - name: Plan infrastructure destroy
         env:
+          GOOGLE_CREDENTIALS: key.json
           TF_VAR_name: ""
           TF_VAR_project: ""
           TF_VAR_region: ""
         run: terraform plan -no-color -destroy -out destroy.out
       - name: Apply infrastructure destruction
+        env:
+          GOOGLE_CREDENTIALS: key.json
         run: terraform apply -no-color destroy.out
