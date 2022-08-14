@@ -1,0 +1,99 @@
+name: Delivery
+on:
+  pull_request:
+    types:
+      - opened
+    branches:
+      - 'main'
+jobs:
+  terrabuild:
+    runs-on: ubuntu-20.04
+    outputs:
+      exitcode: ${{ steps.apply.outputs.exitcode }}
+    env:
+      TF_IN_AUTOMATION: "true"
+      TF_INPUT: 0
+      #TF_LOG: "debug"
+      GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
+    steps:
+      - name: Checkout terraform code
+        uses: actions/checkout@v3
+        with:
+          repository: RaphaeldeGail/probable-packer-infra
+          path: terraform
+      - name: HashiCorp - Setup Terraform
+        # You may pin to the exact commit or the version.
+        # uses: hashicorp/setup-terraform@d22444889af304a44b997011fbabb81ff705a7b4
+        uses: hashicorp/setup-terraform@v1.2.1
+        with:
+          # The version of Terraform CLI to install. Instead of full version string you can also specify constraint string starting with "<" (for example `<1.13.0`) to install the latest version satisfying the constraint. A value of `latest` will install the latest version of Terraform CLI. Defaults to `latest`.
+          terraform_version: 1.1.2
+          # Whether or not to install a wrapper to wrap subsequent calls of the `terraform` binary and expose its STDOUT, STDERR, and exit code as outputs named `stdout`, `stderr`, and `exitcode` respectively. Defaults to `true`.
+          terraform_wrapper: true # optional, default is true
+      - name: Initialize Terraform working directory
+        env:
+          BACKEND_CONFIG: ${{ secrets.TF_BACKEND_CONFIG }}
+        run: terraform init -reconfigure -no-color -backend-config="$BACKEND_CONFIG"
+      - name: Plan infrastructure update
+        env:
+          TF_VAR_name: ${{ env.NAME }}
+          TF_VAR_project: ${{ env.PROJECT }}
+          TF_VAR_region: ${{ env.REGION }}
+        run: terraform plan -no-color -out plan.out
+      - name: Apply infrastructure update
+        id: apply
+        run: terraform apply -no-color plan.out
+  buildelivery:
+    runs-on: ubuntu-20.04
+    container:
+      image: raphaeldegail/packer:1.8.0
+    if: needs.terrabuild.outputs.exitcode == 0
+    env:
+      PKR_VAR_name: ${{ env.NAME}}
+      PKR_VAR_project: ${{ env.PROJECT }}
+      PKR_VAR_region: ${{ env.REGION }}
+      PKR_VAR_rsa_key: ${{ secrets.RSA_KEY }}
+      PKR_VAR_rsa_pub: ${{ secrets.RSA_PUB }}
+      GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Check format of Packer script
+        run: packer fmt -check bounce.pkr.hcl
+      - name: Validate Packer script
+        run: packer validate bounce.pkr.hcl
+      - name: Build Packer image
+        run: packer build -color=false bounce.pkr.hcl
+  clean:
+    runs-on: ubuntu-20.04
+    needs: [buildelivery]
+    if: ${{ always() }}
+    env:
+      TF_IN_AUTOMATION: "true"
+      TF_INPUT: 0
+      #TF_LOG: "debug"
+      GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: HashiCorp - Setup Terraform
+        # You may pin to the exact commit or the version.
+        # uses: hashicorp/setup-terraform@d22444889af304a44b997011fbabb81ff705a7b4
+        uses: hashicorp/setup-terraform@v1.2.1
+        with:
+          # The version of Terraform CLI to install. Instead of full version string you can also specify constraint string starting with "<" (for example `<1.13.0`) to install the latest version satisfying the constraint. A value of `latest` will install the latest version of Terraform CLI. Defaults to `latest`.
+          terraform_version: 1.1.2
+          # Whether or not to install a wrapper to wrap subsequent calls of the `terraform` binary and expose its STDOUT, STDERR, and exit code as outputs named `stdout`, `stderr`, and `exitcode` respectively. Defaults to `true`.
+          terraform_wrapper: true # optional, default is true
+      - name: Initialize Terraform working directory
+        env:
+          BACKEND_CONFIG: ${{ secrets.TF_BACKEND_CONFIG }}
+        run: terraform init -reconfigure -no-color -backend-config="$BACKEND_CONFIG"
+      - name: Plan infrastructure destroy
+        env:
+          TF_VAR_name: ""
+          TF_VAR_project: ""
+          TF_VAR_region: ""
+        run: terraform plan -no-color -destroy -out destroy.out
+      - name: Apply infrastructure destruction
+        run: terraform apply -no-color destroy.out
