@@ -118,7 +118,7 @@ jobs:
       - name: Plan infrastructure destroy
         env:
           GOOGLE_CREDENTIALS: key.json
-          TF_VAR_name: ""
+          TF_VAR_name: "aaa"
           TF_VAR_project: ""
           TF_VAR_region: ""
         run: terraform plan -no-color -destroy -out destroy.out
