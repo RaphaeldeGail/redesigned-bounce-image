@@ -8,12 +8,12 @@ packer {
 }
 
 variable "rsa_key" {
-  type = string
+  type      = string
   sensitive = true
 }
 
 variable "rsa_pub" {
-  type = string
+  type      = string
   sensitive = true
 }
 
@@ -30,7 +30,7 @@ variable "name" {
 }
 
 variable "skip_create_image" {
-  type = bool
+  type    = bool
   default = true
 }
 
