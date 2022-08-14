@@ -67,13 +67,8 @@ if ! sudo test -s /etc/ssh/sshd_config.d/custom.conf; then
 fi
 echo "Configuration file successfully loaded"
 
-# Stop snapd services
+# Stop snapd DAEMON
 sudo systemctl stop snapd && sudo systemctl disable snapd
-# Purge snapd
-sudo apt purge snapd
-# Remove no longer needed folders
-rm -rf $HOME/snap
-sudo rm -rf /snap /var/snap /var/lib/snapd /var/cache/snapd /usr/lib/snapd /root/snap
 
 echo "Installing simple Nginx server"
 sudo DEBIAN_FRONTEND=noninteractive apt-get --quiet update >/dev/null
@@ -92,8 +87,20 @@ fi
 echo "Nginx server is correctly responding."
 
 # Disable APT sources
-sudo apt-get clean
-sudo rm -rf /etc/apt
+sudo apt-get --quiet clean >/dev/null
+sudo rm -rf /etc/apt/sources.list /etc/apt/sources.list.d/
+
+# Disable APT auto updates
+echo -ne "APT::Periodic::Update-Package-Lists \"0\";\nAPT::Periodic::Unattended-Upgrade \"0\";" | sudo tee /etc/apt/apt.conf.d/20auto-upgrades > /dev/null
+if ! sudo test -f /etc/apt/apt.conf.d/20auto-upgrades; then
+   echo "Configuration file /etc/apt/apt.conf.d/20auto-upgrades was not correctly written."
+   exit 1
+fi
+if ! sudo test -s /etc/apt/apt.conf.d/20auto-upgrades; then
+   echo "Configuration file /etc/apt/apt.conf.d/20auto-upgrades is empty."
+   exit 1
+fi
+echo "APT auto updates succesfully disabled."
 
 echo "Build succesful"
 exit 0
