@@ -36,9 +36,9 @@ jobs:
         run: terraform init -reconfigure -no-color -backend-config="$BACKEND_CONFIG"
       - name: Plan infrastructure update
         env:
-          TF_VAR_name: ${{ env.NAME }}
-          TF_VAR_project: ${{ env.PROJECT }}
-          TF_VAR_region: ${{ env.REGION }}
+          TF_VAR_name: ${{ secrets.NAME }}
+          TF_VAR_project: ${{ secrets.PROJECT }}
+          TF_VAR_region: ${{ secrets.REGION }}
         run: terraform plan -no-color -out plan.out
       - name: Apply infrastructure update
         id: apply
@@ -49,9 +49,9 @@ jobs:
       image: raphaeldegail/packer:1.8.0
     if: needs.terrabuild.outputs.exitcode == 0
     env:
-      PKR_VAR_name: ${{ env.NAME}}
-      PKR_VAR_project: ${{ env.PROJECT }}
-      PKR_VAR_region: ${{ env.REGION }}
+      PKR_VAR_name: ${{ secrets.NAME}}
+      PKR_VAR_project: ${{ secrets.PROJECT }}
+      PKR_VAR_region: ${{ secrets.REGION }}
       PKR_VAR_rsa_key: ${{ secrets.RSA_KEY }}
       PKR_VAR_rsa_pub: ${{ secrets.RSA_PUB }}
       GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
