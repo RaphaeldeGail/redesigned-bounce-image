@@ -34,7 +34,7 @@ jobs:
         env:
           BACKEND_CONFIG: ${{ secrets.TF_BACKEND_CONFIG }}
         run: |
-          echo $BACKEND_CONFIG > config.bucket.tfbackend
+          echo $BACKEND_CONFIG | base64 --decode > config.bucket.tfbackend
       - name: Initialize Terraform working directory
         run: terraform init -reconfigure -no-color -backend-config=config.bucket.tfbackend
       - name: Plan infrastructure update
