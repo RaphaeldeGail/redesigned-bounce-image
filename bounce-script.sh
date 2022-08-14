@@ -67,9 +67,6 @@ if ! sudo test -s /etc/ssh/sshd_config.d/custom.conf; then
 fi
 echo "Configuration file successfully loaded"
 
-# Stop snapd DAEMON
-sudo systemctl stop snapd && sudo systemctl disable snapd
-
 echo "Installing simple Nginx server"
 sudo DEBIAN_FRONTEND=noninteractive apt-get --quiet update >/dev/null
 sudo DEBIAN_FRONTEND=noninteractive apt-get --quiet -y install nginx >/dev/null
