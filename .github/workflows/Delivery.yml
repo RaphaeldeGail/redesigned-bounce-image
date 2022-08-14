@@ -57,7 +57,7 @@ jobs:
       PKR_VAR_region: ${{ secrets.REGION }}
       PKR_VAR_rsa_key: ${{ secrets.RSA_KEY }}
       PKR_VAR_rsa_pub: ${{ secrets.RSA_PUB }}
-      GOOGLE_APPLICATION_CREDENTIALS: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
+      CREDENTIALS: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -67,7 +67,11 @@ jobs:
         run: packer init bounce.pkr.hcl 
       - name: Validate Packer script
         run: packer validate bounce.pkr.hcl
+      - name: Create GCP authentication key.json
+        run: echo "$CREDENTIALS" > key.json
       - name: Build Packer image
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: key.json
         run: packer build -color=false bounce.pkr.hcl
   clean:
     runs-on: ubuntu-20.04
