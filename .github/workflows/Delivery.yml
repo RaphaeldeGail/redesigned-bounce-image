@@ -63,6 +63,8 @@ jobs:
         uses: actions/checkout@v2
       - name: Check format of Packer script
         run: packer fmt -check bounce.pkr.hcl
+      - name: Initialize packer with plugins
+        run: packer init bounce.pkr.hcl 
       - name: Validate Packer script
         run: packer validate bounce.pkr.hcl
       - name: Build Packer image
