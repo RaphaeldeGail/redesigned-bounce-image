@@ -1,0 +1,116 @@
+name: Build
+on:
+  pull_request:
+    types:
+      - opened
+    branches:
+      - 'main'
+jobs:
+  terrabuild:
+    runs-on: ubuntu-20.04
+    outputs:
+      exitcode: ${{ steps.apply.outputs.exitcode }}
+    env:
+      TF_IN_AUTOMATION: "true"
+      TF_INPUT: 0
+    steps:
+      - name: Checkout terraform code
+        uses: actions/checkout@v3
+        with:
+          repository: RaphaeldeGail/probable-packer-infra
+      - name: HashiCorp - Setup Terraform
+        uses: hashicorp/setup-terraform@v1.2.1
+        with:
+          terraform_version: 1.1.2
+          terraform_wrapper: true
+      - name: Create the backend configuration file
+        env:
+          BACKEND_CONFIG: ${{ secrets.TF_BACKEND_CONFIG }}
+        run: |
+          echo $BACKEND_CONFIG | base64 --decode > config.bucket.tfbackend
+      - name: Create GCP authentication key.json
+        env:
+          CREDENTIALS: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
+        run: echo $CREDENTIALS | base64 --decode > key.json
+      - name: Initialize Terraform working directory
+        env:
+          GOOGLE_CREDENTIALS: key.json
+        run: terraform init -reconfigure -no-color -backend-config=config.bucket.tfbackend
+      - name: Plan infrastructure update
+        env:
+          GOOGLE_CREDENTIALS: key.json
+          TF_VAR_name: ${{ secrets.NAME }}
+          TF_VAR_project: ${{ secrets.PROJECT }}
+          TF_VAR_region: ${{ secrets.REGION }}
+        run: terraform plan -no-color -out plan.out
+      - name: Apply infrastructure update
+        env:
+          GOOGLE_CREDENTIALS: key.json
+        id: apply
+        run: terraform apply -no-color plan.out
+  packer:
+    runs-on: ubuntu-20.04
+    container:
+      image: raphaeldegail/packer:1.8.0
+    needs: [terrabuild]
+    if: needs.terrabuild.outputs.exitcode == 0
+    env:
+      PKR_VAR_name: ${{ secrets.NAME}}
+      PKR_VAR_project: ${{ secrets.PROJECT }}
+      PKR_VAR_region: ${{ secrets.REGION }}
+      PKR_VAR_rsa_key: ${{ secrets.RSA_KEY }}
+      PKR_VAR_rsa_pub: ${{ secrets.RSA_PUB }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Initialize packer with plugins
+        run: packer init bounce.pkr.hcl
+      - name: Create GCP authentication key.json
+        env:
+          CREDENTIALS: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
+        run: echo $CREDENTIALS | base64 --decode > key.json
+      - name: Build Packer image
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: key.json
+        run: packer build -color=false bounce.pkr.hcl
+  clean:
+    runs-on: ubuntu-20.04
+    needs: [packer]
+    if: ${{ always() }}
+    env:
+      TF_IN_AUTOMATION: "true"
+      TF_INPUT: 0
+    steps:
+      - name: Checkout terraform code
+        uses: actions/checkout@v3
+        with:
+          repository: RaphaeldeGail/probable-packer-infra
+      - name: HashiCorp - Setup Terraform
+        uses: hashicorp/setup-terraform@v1.2.1
+        with:
+          terraform_version: 1.1.2
+          terraform_wrapper: true
+      - name: Create the backend configuration file
+        env:
+          BACKEND_CONFIG: ${{ secrets.TF_BACKEND_CONFIG }}
+        run: |
+          echo $BACKEND_CONFIG | base64 --decode > config.bucket.tfbackend
+      - name: Create GCP authentication key.json
+        env:
+          CREDENTIALS: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
+        run: echo $CREDENTIALS | base64 --decode > key.json
+      - name: Initialize Terraform working directory
+        env:
+          GOOGLE_CREDENTIALS: key.json
+        run: terraform init -reconfigure -no-color -backend-config=config.bucket.tfbackend
+      - name: Plan infrastructure destroy
+        env:
+          GOOGLE_CREDENTIALS: key.json
+          TF_VAR_name: "aaa"
+          TF_VAR_project: ""
+          TF_VAR_region: ""
+        run: terraform plan -no-color -destroy -out destroy.out
+      - name: Apply infrastructure destruction
+        env:
+          GOOGLE_CREDENTIALS: key.json
+        run: terraform apply -no-color destroy.out
