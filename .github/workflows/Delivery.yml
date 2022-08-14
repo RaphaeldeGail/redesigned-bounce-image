@@ -57,7 +57,7 @@ jobs:
       PKR_VAR_region: ${{ secrets.REGION }}
       PKR_VAR_rsa_key: ${{ secrets.RSA_KEY }}
       PKR_VAR_rsa_pub: ${{ secrets.RSA_PUB }}
-      GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
+      GOOGLE_APPLICATION_CREDENTIALS: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
     steps:
       - name: Checkout
         uses: actions/checkout@v2
