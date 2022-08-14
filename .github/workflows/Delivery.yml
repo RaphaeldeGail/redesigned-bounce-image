@@ -29,10 +29,13 @@ jobs:
           terraform_version: 1.1.2
           # Whether or not to install a wrapper to wrap subsequent calls of the `terraform` binary and expose its STDOUT, STDERR, and exit code as outputs named `stdout`, `stderr`, and `exitcode` respectively. Defaults to `true`.
           terraform_wrapper: true # optional, default is true
-      - name: Initialize Terraform working directory
+      - name: Create the backend configuration file
         env:
           BACKEND_CONFIG: ${{ secrets.TF_BACKEND_CONFIG }}
-        run: terraform init -reconfigure -no-color -backend-config="$BACKEND_CONFIG"
+        run: |
+          echo "$BACKEND_CONFIG" > config.bucket.tfbackend
+      - name: Initialize Terraform working directory
+        run: terraform init -reconfigure -no-color -backend-config=config.bucket.tfbackend
       - name: Plan infrastructure update
         env:
           TF_VAR_name: ${{ secrets.NAME }}
@@ -46,6 +49,7 @@ jobs:
     runs-on: ubuntu-20.04
     container:
       image: raphaeldegail/packer:1.8.0
+    needs: [terrabuild]
     if: needs.terrabuild.outputs.exitcode == 0
     env:
       PKR_VAR_name: ${{ secrets.NAME}}
@@ -86,10 +90,13 @@ jobs:
           terraform_version: 1.1.2
           # Whether or not to install a wrapper to wrap subsequent calls of the `terraform` binary and expose its STDOUT, STDERR, and exit code as outputs named `stdout`, `stderr`, and `exitcode` respectively. Defaults to `true`.
           terraform_wrapper: true # optional, default is true
-      - name: Initialize Terraform working directory
+      - name: Create the backend configuration file
         env:
           BACKEND_CONFIG: ${{ secrets.TF_BACKEND_CONFIG }}
-        run: terraform init -reconfigure -no-color -backend-config="$BACKEND_CONFIG"
+        run: |
+          echo "$BACKEND_CONFIG" > config.bucket.tfbackend
+      - name: Initialize Terraform working directory
+        run: terraform init -reconfigure -no-color -backend-config=config.bucket.tfbackend
       - name: Plan infrastructure destroy
         env:
           TF_VAR_name: ""
