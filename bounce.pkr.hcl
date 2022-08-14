@@ -9,10 +9,12 @@ packer {
 
 variable "rsa_key" {
   type = string
+  sensitive = true
 }
 
 variable "rsa_pub" {
   type = string
+  sensitive = true
 }
 
 variable "project" {
@@ -27,14 +29,19 @@ variable "name" {
   type = string
 }
 
+variable "skip_create_image" {
+  type = bool
+  default = true
+}
+
 source "googlecompute" "custom" {
   project_id                      = var.project
-  source_image                    = "ubuntu-2004-focal-v20220118"
+  source_image_family             = "ubuntu-2004-lts"
   disable_default_service_account = true
   communicator                    = "ssh"
   ssh_username                    = "packer-bot"
   zone                            = "${var.region}-b"
-  //skip_create_image               = true
+  skip_create_image               = var.skip_create_image
 
   image_name        = "bounce-v{{timestamp}}-ubuntu-20"
   image_description = "Ubuntu 20.04 based VM with custom SSH settings for bounce."

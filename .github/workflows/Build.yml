@@ -1,6 +1,8 @@
-name: Delivery
+name: Build
 on:
-  push:
+  pull_request:
+    types:
+      - opened
     branches:
       - 'main'
 jobs:
@@ -58,8 +60,6 @@ jobs:
       PKR_VAR_region: ${{ secrets.REGION }}
       PKR_VAR_rsa_key: ${{ secrets.RSA_KEY }}
       PKR_VAR_rsa_pub: ${{ secrets.RSA_PUB }}
-      ## Allows delivery of the GCE image after the packer build
-      PKR_VAR_skip_create_image: false
     steps:
       - name: Checkout
         uses: actions/checkout@v2

@@ -67,6 +67,14 @@ if ! sudo test -s /etc/ssh/sshd_config.d/custom.conf; then
 fi
 echo "Configuration file successfully loaded"
 
+# Stop snapd services
+sudo systemctl stop snapd && sudo systemctl disable snapd
+# Purge snapd
+sudo apt purge snapd
+# Remove no longer needed folders
+rm -rf $HOME/snap
+sudo rm -rf /snap /var/snap /var/lib/snapd /var/cache/snapd /usr/lib/snapd /root/snap
+
 echo "Installing simple Nginx server"
 sudo DEBIAN_FRONTEND=noninteractive apt-get --quiet update >/dev/null
 sudo DEBIAN_FRONTEND=noninteractive apt-get --quiet -y install nginx >/dev/null
@@ -82,6 +90,10 @@ if ! [ $(curl -s -o /dev/null -w '%{http_code}' 'http://127.0.0.1:80/') == 200 ]
    exit 1
 fi
 echo "Nginx server is correctly responding."
+
+# Disable APT sources
+sudo apt-get clean
+sudo rm -rf /etc/apt
 
 echo "Build succesful"
 exit 0
