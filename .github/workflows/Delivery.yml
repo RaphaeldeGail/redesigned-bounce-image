@@ -35,8 +35,7 @@ jobs:
           BACKEND_CONFIG: ${{ secrets.TF_BACKEND_CONFIG }}
         run: |
           echo $BACKEND_CONFIG | base64 --decode > config.bucket.tfbackend
-            - name: Create GCP authentication key.json
-      - name: Create credentials file
+      - name: Create GCP authentication key.json
         run: echo $CREDENTIALS | base64 --decode > key.json
       - name: Initialize Terraform working directory
         env:
