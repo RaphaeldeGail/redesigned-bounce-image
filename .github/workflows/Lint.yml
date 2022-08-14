@@ -8,10 +8,10 @@ jobs:
       image: raphaeldegail/packer:1.8.0
     env:
       PKR_VAR_name: "aaa"
-      PKR_VAR_project: ""
-      PKR_VAR_region: ""
-      PKR_VAR_rsa_key: ""
-      PKR_VAR_rsa_pub: ""
+      PKR_VAR_project: "aaa"
+      PKR_VAR_region: "aaa"
+      PKR_VAR_rsa_key: "aaa"
+      PKR_VAR_rsa_pub: "aaa"
     steps:
       - name: Checkout
         uses: actions/checkout@v2
