@@ -7,22 +7,23 @@ packer {
   }
 }
 
-variable "rsa_key" {
-  type      = string
-  sensitive = true
-}
-
-variable "rsa_pub" {
-  type      = string
-  sensitive = true
+variable "rsa_keystore" {
+  type = object({
+    private = string
+    public  = string
+  })
+  description = "The RSA keystore is composed of **private** for the private key and **public** for the public key."
+  sensitive   = true
 }
 
 variable "project" {
-  type = string
+  type        = string
+  description = "The ID of the GCP **project** to use for the packer build."
 }
 
 variable "region" {
-  type = string
+  type        = string
+  description = "The name of the **region** for the network hosting the packer instance."
 }
 
 variable "name" {
