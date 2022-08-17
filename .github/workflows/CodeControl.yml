@@ -7,8 +7,8 @@ jobs:
     container:
       image: raphaeldegail/packer:1.8.0
     env:
-      PKR_VAR_workspace: "{name=\"aaa\", project=\"\", region=\"\"}"
-      PKR_VAR_machine: "{source_image_family=\"\", rsa_keystore={private=\"\", public=\"\"}}"
+      PKR_VAR_workspace: "{name=\"name\", project=\"project\", region=\"region\"}"
+      PKR_VAR_machine: "{source_image_family=\"source\", rsa_keystore={private=\"private\", public=\"public\"}}"
     steps:
       - name: Checkout
         uses: actions/checkout@v2
