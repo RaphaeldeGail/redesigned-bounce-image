@@ -52,7 +52,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
       - name: Initialize packer with plugins
-        run: packer init bounce.pkr.hcl
+        run: packer init .
       - name: Create GCP authentication key.json
         env:
           CREDENTIALS: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
@@ -61,7 +61,7 @@ jobs:
         env:
           PKR_VAR_workspace: ${{ secrets.WORKSPACE }}
           PKR_VAR_machine: ${{ secrets.MACHINE }}
-        run: packer build -color=false bounce.pkr.hcl
+        run: packer build -color=false .
   clean:
     runs-on: ubuntu-20.04
     needs: [packer]
@@ -92,8 +92,8 @@ jobs:
       - name: Initialize Terraform working directory
         run: terraform init -reconfigure -no-color -backend-config=config.bucket.tfbackend
       - name: Plan infrastructure destroy
-        run: terraform plan -no-color -destroy -out destroy.out
-      - name: Apply infrastructure destruction
         env:
           TF_VAR_workspace: ${{ secrets.WORKSPACE }}
+        run: terraform plan -no-color -destroy -out destroy.out
+      - name: Apply infrastructure destruction
         run: terraform apply -no-color destroy.out
