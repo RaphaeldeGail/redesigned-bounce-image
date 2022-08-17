@@ -18,12 +18,12 @@ sudo mkdir /etc/custom
 sudo chmod 0700 /etc/custom
 
 echo "Loading private key"
-echo "$RSA_KEY" | sudo tee /etc/custom/ssh_host_rsa_key > /dev/null
+echo "$RSA_KEY" | base64 --decode | sudo tee /etc/custom/ssh_host_rsa_key > /dev/null
 sudo chown root:root /etc/custom/ssh_host_rsa_key
 sudo chmod 400 /etc/custom/ssh_host_rsa_key
 
 echo "Loading public key"
-echo "$RSA_PUB" | sudo tee /etc/custom/ssh_host_rsa_key.pub > /dev/null
+echo "$RSA_PUB" | base64 --decode | sudo tee /etc/custom/ssh_host_rsa_key.pub > /dev/null
 sudo chown root:root /etc/custom/ssh_host_rsa_key.pub
 sudo chmod 600 /etc/custom/ssh_host_rsa_key.pub
 
