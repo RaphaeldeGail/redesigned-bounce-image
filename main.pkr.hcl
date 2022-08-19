@@ -40,8 +40,9 @@ build {
       "RSA_PUB=${var.machine.rsa_keystore.public}",
       "RSA_KEY=${var.machine.rsa_keystore.private}"
     ]
+    # Will execute the script as root
     execute_command  = "sudo sh -c '{{ .Vars }} {{ .Path }}'"
     valid_exit_codes = [0]
-    script           = "./bounce-script.sh"
+    script           = "./script.sh"
   }
 }
