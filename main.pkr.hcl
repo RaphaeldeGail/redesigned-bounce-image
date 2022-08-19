@@ -1,4 +1,5 @@
 packer {
+  required_version = ">= 1.8.0"
   required_plugins {
     googlecompute = {
       version = "~> 1.0.10"
@@ -31,6 +32,7 @@ source "googlecompute" "custom" {
 }
 
 build {
+  name    = join("-", [var.workspace.name, "build", var.machine.source_image_family])
   sources = ["sources.googlecompute.custom"]
 
   provisioner "shell" {
@@ -38,6 +40,8 @@ build {
       "RSA_PUB=${var.machine.rsa_keystore.public}",
       "RSA_KEY=${var.machine.rsa_keystore.private}"
     ]
-    script = "./bounce-script.sh"
+    execute_command  = "sudo sh -c '{{ .Vars }} {{ .Path }}'"
+    valid_exit_codes = [0]
+    script           = "./bounce-script.sh"
   }
 }
