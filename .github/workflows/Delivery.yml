@@ -1,6 +1,8 @@
 name: Delivery
 on:
-  push:
+  pull_request:
+    types:
+      - opened
     branches:
       - 'main'
 jobs:
@@ -11,6 +13,7 @@ jobs:
     env:
       TF_IN_AUTOMATION: "true"
       TF_INPUT: 0
+      GOOGLE_CREDENTIALS: key.json
     steps:
       - name: Checkout terraform code
         uses: actions/checkout@v3
@@ -29,21 +32,14 @@ jobs:
       - name: Create GCP authentication key.json
         env:
           CREDENTIALS: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
-        run: echo $CREDENTIALS | base64 --decode > key.json
+        run: echo $CREDENTIALS | base64 --decode > ${{ env.GOOGLE_CREDENTIALS }}
       - name: Initialize Terraform working directory
-        env:
-          GOOGLE_CREDENTIALS: key.json
         run: terraform init -reconfigure -no-color -backend-config=config.bucket.tfbackend
       - name: Plan infrastructure update
         env:
-          GOOGLE_CREDENTIALS: key.json
-          TF_VAR_name: ${{ secrets.NAME }}
-          TF_VAR_project: ${{ secrets.PROJECT }}
-          TF_VAR_region: ${{ secrets.REGION }}
+          TF_VAR_workspace: ${{ secrets.WORKSPACE }}
         run: terraform plan -no-color -out plan.out
       - name: Apply infrastructure update
-        env:
-          GOOGLE_CREDENTIALS: key.json
         id: apply
         run: terraform apply -no-color plan.out
   packer:
@@ -53,26 +49,22 @@ jobs:
     needs: [terrabuild]
     if: needs.terrabuild.outputs.exitcode == 0
     env:
-      PKR_VAR_name: ${{ secrets.NAME}}
-      PKR_VAR_project: ${{ secrets.PROJECT }}
-      PKR_VAR_region: ${{ secrets.REGION }}
-      PKR_VAR_rsa_key: ${{ secrets.RSA_KEY }}
-      PKR_VAR_rsa_pub: ${{ secrets.RSA_PUB }}
-      ## Allows delivery of the GCE image after the packer build
-      PKR_VAR_skip_create_image: false
+      GOOGLE_APPLICATION_CREDENTIALS: key.json
     steps:
       - name: Checkout
         uses: actions/checkout@v2
       - name: Initialize packer with plugins
-        run: packer init bounce.pkr.hcl
+        run: packer init .
       - name: Create GCP authentication key.json
         env:
           CREDENTIALS: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
-        run: echo $CREDENTIALS | base64 --decode > key.json
+        run: echo $CREDENTIALS | base64 --decode > ${{ env.GOOGLE_APPLICATION_CREDENTIALS }}
       - name: Build Packer image
         env:
-          GOOGLE_APPLICATION_CREDENTIALS: key.json
-        run: packer build -color=false bounce.pkr.hcl
+          PKR_VAR_workspace: ${{ secrets.WORKSPACE }}
+          PKR_VAR_machine: ${{ secrets.MACHINE }}
+          PKR_VAR_skip_create_image: false
+        run: packer build -color=false .
   clean:
     runs-on: ubuntu-20.04
     needs: [packer]
@@ -80,6 +72,7 @@ jobs:
     env:
       TF_IN_AUTOMATION: "true"
       TF_INPUT: 0
+      GOOGLE_CREDENTIALS: key.json
     steps:
       - name: Checkout terraform code
         uses: actions/checkout@v3
@@ -98,19 +91,12 @@ jobs:
       - name: Create GCP authentication key.json
         env:
           CREDENTIALS: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
-        run: echo $CREDENTIALS | base64 --decode > key.json
+        run: echo $CREDENTIALS | base64 --decode > ${{ env.GOOGLE_CREDENTIALS }}
       - name: Initialize Terraform working directory
-        env:
-          GOOGLE_CREDENTIALS: key.json
         run: terraform init -reconfigure -no-color -backend-config=config.bucket.tfbackend
       - name: Plan infrastructure destroy
         env:
-          GOOGLE_CREDENTIALS: key.json
-          TF_VAR_name: "aaa"
-          TF_VAR_project: ""
-          TF_VAR_region: ""
+          TF_VAR_workspace: ${{ secrets.WORKSPACE }}
         run: terraform plan -no-color -destroy -out destroy.out
       - name: Apply infrastructure destruction
-        env:
-          GOOGLE_CREDENTIALS: key.json
         run: terraform apply -no-color destroy.out
