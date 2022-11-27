@@ -1,9 +1,3 @@
-# terraform working directory
-.terraform
-# output of terraform plans
-plan.out
-# local terraform states (and backups)
-*.tfstate*
 # secrets directory
 .secrets
 # build directory
