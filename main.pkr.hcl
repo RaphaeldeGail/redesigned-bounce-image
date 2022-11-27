@@ -47,6 +47,9 @@ build {
   }
 
   post-processors {
+    post-processor "compress" {
+        output = "output/disk.raw.tar.gz"
+    }
     post-processor "googlecompute-import" {
       account_file      = "import.json"
       bucket            = "workspace-workstation-v1-7p6l"
