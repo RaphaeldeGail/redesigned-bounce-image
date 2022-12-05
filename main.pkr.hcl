@@ -47,8 +47,13 @@ build {
   }
 
   post-processors {
-    post-processor "compress" {
-        output = "output/disk.raw.tar.gz"
+    post-processor "googlecompute-export" {
+      account_file      = "import.json"
+      bucket            = "workspace-workstation-v1-7p6l"
+      project_id        = "workspace-workstation-v1-7p6l"
+      image_name        = join("-", [var.workspace.name, "v{{ timestamp }}", var.machine.source_image_family])
+      image_description = "SSH customized image for bounce usage, based on ${var.machine.source_image_family}"
+      image_family      = join("-", [var.workspace.name, var.machine.source_image_family])
     }
     post-processor "googlecompute-import" {
       account_file      = "import.json"
