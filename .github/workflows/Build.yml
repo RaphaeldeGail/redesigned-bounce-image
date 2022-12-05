@@ -57,6 +57,10 @@ jobs:
         env:
           CREDENTIALS: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
         run: echo $CREDENTIALS | base64 --decode > ${{ env.GOOGLE_APPLICATION_CREDENTIALS }}
+      - name: Create GCP Import import.json
+        env:
+          IMPORT: ${{ secrets.GOOGLE_IMPORT_CREDENTIALS }}
+        run: echo $IMPORT | base64 --decode > import.json
       - name: Build Packer image
         env:
           PKR_VAR_workspace: ${{ secrets.WORKSPACE }}

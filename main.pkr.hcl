@@ -48,13 +48,13 @@ build {
 
   post-processors {
     post-processor "googlecompute-export" {
-      account_file      = "import.json"
-      paths             = [
+      account_file = "import.json"
+      paths = [
         "gs://workspace-workstation-v1-7p6l/images/${join("-", [var.workspace.name, var.machine.source_image_family])}/${join("-", [var.workspace.name, "v{{ timestamp }}", var.machine.source_image_family])}"
       ]
-      network      = "${var.workspace.name}-network"
-      subnetwork   = "${var.workspace.name}-subnet"
-      zone         = "${var.workspace.region}-b"
+      network    = "${var.workspace.name}-network"
+      subnetwork = "projects/${var.workspace.project}/regions/${var.workspace.region}/subnetworks/${var.workspace.name}-subnet"
+      zone       = "${var.workspace.region}-b"
     }
     post-processor "googlecompute-import" {
       account_file      = "import.json"
