@@ -20,6 +20,9 @@ source "googlecompute" "custom" {
   image_name        = join("-", [var.workspace.name, "v{{ timestamp }}", var.machine.source_image_family])
   image_description = "SSH customized image for bounce usage, based on ${var.machine.source_image_family}"
   image_family      = join("-", [var.workspace.name, var.machine.source_image_family])
+  image_labels = {
+    version = var.version
+  }
 
 
   machine_type = "e2-micro"

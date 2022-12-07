@@ -33,6 +33,11 @@ variable "machine" {
   }
 }
 
+variable "version" {
+  type        = string
+  description = "The type of version for the image (develop or release)."
+}
+
 variable "skip_create_image" {
   type        = bool
   default     = true
