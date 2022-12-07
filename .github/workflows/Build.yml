@@ -63,7 +63,7 @@ jobs:
           PKR_VAR_machine: ${{ secrets.MACHINE }}
         run: packer build -color=false .
       - name: Fetch image name from manifest
-        run: jq ".builds[].files[].name" manifest.json
+        run: cat manifest.json
   clean:
     runs-on: ubuntu-20.04
     needs: [packer]
