@@ -47,22 +47,8 @@ build {
   }
 
   post-processors {
-    post-processor "googlecompute-export" {
-      account_file = "import.json"
-      paths = [
-        "gs://workspace-workstation-v1-7p6l/images/${join("-", [var.workspace.name, var.machine.source_image_family])}/${join("-", [var.workspace.name, "v{{ timestamp }}", var.machine.source_image_family])}"
-      ]
-      network    = "${var.workspace.name}-network"
-      subnetwork = "projects/${var.workspace.project}/regions/${var.workspace.region}/subnetworks/${var.workspace.name}-subnet"
-      zone       = "${var.workspace.region}-b"
-    }
-    post-processor "googlecompute-import" {
-      account_file      = "import.json"
-      bucket            = "workspace-workstation-v1-7p6l"
-      project_id        = "workspace-workstation-v1-7p6l"
-      image_name        = join("-", [var.workspace.name, "v{{ timestamp }}", var.machine.source_image_family])
-      image_description = "SSH customized image for bounce usage, based on ${var.machine.source_image_family}"
-      image_family      = join("-", [var.workspace.name, var.machine.source_image_family])
+    post-processor "manifest" {
+      output = "manifest.json"
     }
   }
 }
