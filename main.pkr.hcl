@@ -8,6 +8,10 @@ packer {
   }
 }
 
+local "unique_version" {
+  expression = var.version.type == "release" ? var.version.number : "{{ var.version.number }}-{{ timestamp }}"
+}
+
 source "googlecompute" "custom" {
   project_id                      = var.workspace.project
   source_image_family             = var.machine.source_image_family
@@ -17,11 +21,13 @@ source "googlecompute" "custom" {
   zone                            = "${var.workspace.region}-b"
   skip_create_image               = var.skip_create_image
 
-  image_name        = join("-", [var.workspace.name, "v{{ timestamp }}", var.machine.source_image_family])
+  image_name        = join("-", [var.workspace.name, local.unique_version, var.machine.source_image_family])
   image_description = "SSH customized image for bounce usage, based on ${var.machine.source_image_family}"
   image_family      = join("-", [var.workspace.name, var.machine.source_image_family])
   image_labels = {
-    version = var.version
+    version      = var.version.number
+    version_type = var.version.type
+    commit       = var.version.commit
   }
 
 

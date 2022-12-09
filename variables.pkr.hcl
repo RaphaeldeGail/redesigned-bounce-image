@@ -34,8 +34,17 @@ variable "machine" {
 }
 
 variable "version" {
-  type        = string
-  description = "The type of version for the image (develop or release)."
+  type = object({
+    number = string
+    type   = string
+    commit = string
+  })
+  description = "The version number and type, *develop* or *release*, for the image. The sha256 of the underlying commit complements the version."
+
+  validation {
+    condition     = var.version.type == "develop" || var.version.type == "release"
+    error_message = "The version type can either be develop or release, got: ${var.version.type} ."
+  }
 }
 
 variable "skip_create_image" {

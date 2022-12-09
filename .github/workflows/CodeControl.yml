@@ -12,6 +12,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
+      - name: Read version
+        run: |
+          echo "PKR_VAR_version={\"number\":\"$(cat VERSION.txt)\",\"type\":\"develop\",\"commit\":\"$GITHUB_SHA\"}" >> $GITHUB_ENV
       - name: Check format of Packer script
         run: packer fmt -check .
       - name: Initialize packer with plugins

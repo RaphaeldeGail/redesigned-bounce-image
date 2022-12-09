@@ -57,11 +57,13 @@ jobs:
         env:
           CREDENTIALS: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
         run: echo $CREDENTIALS | base64 --decode > ${{ env.GOOGLE_APPLICATION_CREDENTIALS }}
+      - name: Read version
+        run: |
+          echo "PKR_VAR_version={\"number\":\"$(cat VERSION.txt)\",\"type\":\"develop\",\"commit\":\"$GITHUB_SHA\"}" >> $GITHUB_ENV
       - name: Build Packer image
         env:
           PKR_VAR_workspace: ${{ secrets.WORKSPACE }}
           PKR_VAR_machine: ${{ secrets.MACHINE }}
-          PKR_VAR_version: "develop"
           PKR_VAR_skip_create_image: false
         run: packer build -color=false .
       - name: Fetch image name from manifest
