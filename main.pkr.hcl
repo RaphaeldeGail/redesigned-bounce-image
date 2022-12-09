@@ -9,7 +9,7 @@ packer {
 }
 
 local "unique_version" {
-  expression = var.version.type == "release" ? replace(var.version.number,".","-") : "${replace(var.version.number,".","-")}-{{ timestamp }}"
+  expression = var.version.type == "release" ? replace(var.version.number, ".", "-") : "${replace(var.version.number, ".", "-")}-{{ timestamp }}"
 }
 
 source "googlecompute" "custom" {
