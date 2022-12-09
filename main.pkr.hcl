@@ -25,7 +25,7 @@ source "googlecompute" "custom" {
   image_description = "SSH customized image for bounce usage, based on ${var.machine.source_image_family}"
   image_family      = join("-", [var.workspace.name, var.machine.source_image_family])
   image_labels = {
-    version      = var.version.number
+    version      = replace(var.version.number, ".", "-")
     version_type = var.version.type
     commit       = var.version.commit
   }
