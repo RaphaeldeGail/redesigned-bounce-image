@@ -43,7 +43,7 @@ variable "version" {
 
   validation {
     condition     = var.version.type == "develop" || var.version.type == "release"
-    error_message = "The version type can either be develop or release, got: ${var.version.type} ."
+    error_message = "The version type can either be develop or release."
   }
 }
 
