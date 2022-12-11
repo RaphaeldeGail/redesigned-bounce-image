@@ -8,8 +8,9 @@ packer {
   }
 }
 
-local "unique_version" {
-  expression = var.version.type == "release" ? replace(var.version.number, ".", "-") : "${replace(var.version.number, ".", "-")}-{{ timestamp }}"
+locals {
+  formatted_version = replace(var.version.number, ".", "-")
+  unique_version    = join("-", [local.formatted_version, substr(var.version.commit, 0, 10)])
 }
 
 source "googlecompute" "custom" {
@@ -25,11 +26,10 @@ source "googlecompute" "custom" {
   image_description = "SSH customized image for bounce usage, based on ${var.machine.source_image_family}"
   image_family      = join("-", [var.workspace.name, var.machine.source_image_family])
   image_labels = {
-    version      = replace(var.version.number, ".", "-")
+    version      = local.formatted_version
     version_type = var.version.type
     commit       = var.version.commit
   }
-
 
   machine_type = "e2-micro"
   network      = "${var.workspace.name}-network"
