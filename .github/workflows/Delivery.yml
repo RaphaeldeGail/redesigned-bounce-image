@@ -24,15 +24,14 @@ jobs:
         run: echo $IMPORT | base64 --decode > import.json
       - name: Test script
         env:
-          NAME: ${{ secrets.WORKSPACE.name }}
-          IMAGE: ${{ secrets.MACHINE.source_image_family }}
-          PROJECT: ${{ secrets.WORKSPACE.project }}
+          WORKSPACE: ${{ secrets.WORKSPACE }}
+          MACHINE: ${{ secrets.MACHINE }}
         run: |
-          echo $NAME;
+          echo ${{ env.WORKSPACE.name }};
           cat VERSION.txt | sed -E 's/^(.*)\.(.*)\.(.*)$/\1-\2-\3/';
           echo -n $GITHUB_SHA | cut -c -10;
-          echo $IMAGE;
-          echo $PROJECT
+          echo ${{ env.MACHINE.source_image_family }};
+          echo ${{ env.WORKSPACE.project }}
         # run: |
         #   gcloud compute images create \
         #   $NAME-$(cat VERSION.txt | sed -E 's/^(.*)\.(.*)\.(.*)$/\1-\2-\3/')-$(echo $GITHUB_SHA | cut -c -10)-$IMAGE \
