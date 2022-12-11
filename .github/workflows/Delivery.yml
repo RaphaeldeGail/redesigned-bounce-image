@@ -27,11 +27,11 @@ jobs:
           WORKSPACE: ${{ secrets.WORKSPACE }}
           MACHINE: ${{ secrets.MACHINE }}
         run: |
-          echo ${{ env.WORKSPACE.name }};
+          echo "${{ env.WORKSPACE.name }}";
           cat VERSION.txt | sed -E 's/^(.*)\.(.*)\.(.*)$/\1-\2-\3/';
           echo -n $GITHUB_SHA | cut -c -10;
-          echo ${{ env.MACHINE.source_image_family }};
-          echo ${{ env.WORKSPACE.project }}
+          echo "${{ env.MACHINE.source_image_family }}";
+          echo "${{ env.WORKSPACE.project }}"
         # run: |
         #   gcloud compute images create \
         #   $NAME-$(cat VERSION.txt | sed -E 's/^(.*)\.(.*)\.(.*)$/\1-\2-\3/')-$(echo $GITHUB_SHA | cut -c -10)-$IMAGE \
