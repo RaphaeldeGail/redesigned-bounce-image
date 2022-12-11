@@ -22,12 +22,22 @@ jobs:
         env:
           IMPORT: ${{ secrets.GOOGLE_IMPORT_CREDENTIALS }}
         run: echo $IMPORT | base64 --decode > import.json
-      - name: Build Packer image
+      - name: Test script
+        env:
+          NAME: ${{ secrets.WORKSPACE.name }}
+          IMAGE: ${{ secrets.MACHINE.source_image_family }}
+          PROJECT: ${{ secrets.WORKSPACE.project }}
         run: |
-          gcloud compute images create \
-          ${{ secrets.WORKSPACE.name }}-$(cat VERSION.txt | sed -E 's/^(.*)\.(.*)\.(.*)$/\1-\2-\3/')-$($GITHUB_SHA | cut -c -10)-${{ secrets.MACHINE.source_image_family }} \
-          --source-image=${{ secrets.WORKSPACE.name }}-$(cat VERSION.txt | sed -E 's/^(.*)\.(.*)\.(.*)$/\1-\2-\3/')-$($GITHUB_SHA | cut -c -10)-${{ secrets.MACHINE.source_image_family }} \
-          --family=${{ secrets.WORKSPACE.name}}-${{ secrets.MACHINE.source_image_family}} \
-          --labels=[version=$(cat VERSION.txt | sed -E 's/^(.*)\.(.*)\.(.*)$/\1-\2-\3/'), version_type='release', commit=$GITHUBB_SHA] \
-          --source-image-project=${{ secrets.WORKSPACE.project }} \
-          --project=coucou
+          echo $NAME;
+          cat VERSION.txt | sed -E 's/^(.*)\.(.*)\.(.*)$/\1-\2-\3/';
+          echo -n $GITHUB_SHA | cut -c -10;
+          echo $IMAGE;
+          echo $PROJECT
+        # run: |
+        #   gcloud compute images create \
+        #   $NAME-$(cat VERSION.txt | sed -E 's/^(.*)\.(.*)\.(.*)$/\1-\2-\3/')-$(echo $GITHUB_SHA | cut -c -10)-$IMAGE \
+        #   --source-image=$NAME-$(cat VERSION.txt | sed -E 's/^(.*)\.(.*)\.(.*)$/\1-\2-\3/')-$($GITHUB_SHA | cut -c -10)-$IMAGE \
+        #   --family=$NAME-$IMAGE \
+        #   --labels=[version=$(cat VERSION.txt | sed -E 's/^(.*)\.(.*)\.(.*)$/\1-\2-\3/'), version_type='release', commit=$GITHUBB_SHA] \
+        #   --source-image-project=$PROJECT \
+        #   --project=coucou
