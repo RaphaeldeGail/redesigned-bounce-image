@@ -33,9 +33,12 @@ jobs:
         run: echo $CREDENTIALS | base64 --decode > ${{ env.GOOGLE_CREDENTIALS }}
       - name: Initialize Terraform working directory
         run: terraform init -reconfigure -no-color -backend-config=config.bucket.tfbackend
-      - name: Plan infrastructure update
+      - name: Set environment variables
         env:
-          TF_VAR_workspace: ${{ secrets.WORKSPACE }}
+          WORKSPACE_PROJECT: ${{ secrets.WORKSPACE_PROJECT}}
+        run: |
+          echo "TF_VAR_workspace={\"name\":\"ssh-bounce\", \"project\":\"$WORKSPACE_PROJECT\", \"region\":\"europe-west1\"}" >> $GITHUB_ENV;
+      - name: Plan infrastructure update
         run: terraform plan -no-color -out plan.out
       - name: Apply infrastructure update
         id: apply
@@ -101,9 +104,12 @@ jobs:
         run: echo $CREDENTIALS | base64 --decode > ${{ env.GOOGLE_CREDENTIALS }}
       - name: Initialize Terraform working directory
         run: terraform init -reconfigure -no-color -backend-config=config.bucket.tfbackend
-      - name: Plan infrastructure destroy
+      - name: Set environment variables
         env:
-          TF_VAR_workspace: ${{ secrets.WORKSPACE }}
+          WORKSPACE_PROJECT: ${{ secrets.WORKSPACE_PROJECT}}
+        run: |
+          echo "TF_VAR_workspace={\"name\":\"ssh-bounce\", \"project\":\"$WORKSPACE_PROJECT\", \"region\":\"europe-west1\"}" >> $GITHUB_ENV;
+      - name: Plan infrastructure destroy
         run: terraform plan -no-color -destroy -out destroy.out
       - name: Apply infrastructure destruction
         run: terraform apply -no-color destroy.out
