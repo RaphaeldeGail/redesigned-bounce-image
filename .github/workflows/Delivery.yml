@@ -29,9 +29,9 @@ jobs:
         run: |
           gcloud auth activate-service-account 'workspace-workstation-v1@workspace-workstation-v1-7p6l.iam.gserviceaccount.com' --key-file=import.json;
           gcloud compute images create \
-          ssh-bounce-$(cat VERSION.txt | sed -E 's/^(.*)\.(.*)\.(.*)$/\1-\2-\3/')-$(echo $GITHUB_SHA | cut -c -10)-debian-11 \
-          --source-image=ssh-bounce-$(cat VERSION.txt | sed -E 's/^(.*)\.(.*)\.(.*)$/\1-\2-\3/')-$($GITHUB_SHA | cut -c -10)-debian-11 \
-          --family=ssh-bounce-debian-11 \
+          bounce-$(cat VERSION.txt | sed -E 's/^(.*)\.(.*)\.(.*)$/\1-\2-\3/')-$(echo $GITHUB_SHA | cut -c -10)-debian-11 \
+          --source-image=bounce-$(cat VERSION.txt | sed -E 's/^(.*)\.(.*)\.(.*)$/\1-\2-\3/')-$($GITHUB_SHA | cut -c -10)-debian-11 \
+          --family=bounce-debian-11 \
           --labels version=$(cat VERSION.txt | sed -E 's/^(.*)\.(.*)\.(.*)$/\1-\2-\3/'),version_type='release',commit=$GITHUB_SHA \
           --source-image-project=$PROJECT \
           --project=workspace-workstation-v1-7p6l
