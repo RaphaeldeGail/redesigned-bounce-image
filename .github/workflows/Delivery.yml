@@ -6,7 +6,7 @@ on:
       - reopened
       - edited
     branches:
-      - 'develop'
+      - 'main'
 jobs:
   terrabuild:
     runs-on: ubuntu-20.04
