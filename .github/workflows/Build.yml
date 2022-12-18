@@ -18,31 +18,28 @@ jobs:
         with:
           repository: RaphaeldeGail/probable-packer-infra
       - name: HashiCorp - Setup Terraform
-        uses: hashicorp/setup-terraform@v1.2.1
+        uses: hashicorp/setup-terraform@v2
         with:
           terraform_version: 1.1.2
           terraform_wrapper: true
-      - name: Create the backend configuration file
+      - name: Create secret configurations
         env:
           BACKEND_CONFIG: ${{ secrets.TF_BACKEND_CONFIG }}
-        run: |
-          echo $BACKEND_CONFIG | base64 --decode > config.bucket.tfbackend
-      - name: Create GCP authentication key.json
-        env:
           CREDENTIALS: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
-        run: echo $CREDENTIALS | base64 --decode > ${{ env.GOOGLE_CREDENTIALS }}
-      - name: Initialize Terraform working directory
-        run: terraform init -reconfigure -no-color -backend-config=config.bucket.tfbackend
-      - name: Set environment variables
-        env:
           WORKSPACE_PROJECT: ${{ secrets.WORKSPACE_PROJECT}}
         run: |
-          echo "TF_VAR_workspace={\"name\":\"bounce\", \"project\":\"$WORKSPACE_PROJECT\", \"region\":\"europe-west1\"}" >> $GITHUB_ENV;
-      - name: Plan infrastructure update
+          echo $BACKEND_CONFIG | base64 --decode > config.bucket.tfbackend &&\
+          echo $CREDENTIALS | base64 --decode > ${{ env.GOOGLE_CREDENTIALS }} &&\
+          echo "TF_VAR_workspace={\"name\":\"bounce\", \"project\":\"$WORKSPACE_PROJECT\", \"region\":\"europe-west1\"}" >> $GITHUB_ENV
+      - name: Initialize Terraform working directory
+        run: terraform init -reconfigure -no-color -backend-config=config.bucket.tfbackend
         run: terraform plan -no-color -out plan.out
       - name: Apply infrastructure update
         id: apply
-        run: terraform apply -no-color plan.out
+        run: |
+          terraform apply -no-color plan.out &&\
+          rm -f plan.out &&\
+          rm -f config.bucket.tfbackend
   packer:
     runs-on: ubuntu-20.04
     container:
@@ -53,28 +50,24 @@ jobs:
       GOOGLE_APPLICATION_CREDENTIALS: key.json
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Initialize packer with plugins
         run: packer init .
       - name: Create GCP authentication key.json
         env:
           CREDENTIALS: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
-        run: echo $CREDENTIALS | base64 --decode > ${{ env.GOOGLE_APPLICATION_CREDENTIALS }}
-      - name: Read version
-        env:
           WORKSPACE_PROJECT: ${{ secrets.WORKSPACE_PROJECT}}
           RSA_PUBLIC: ${{ secrets.RSA_PUBLIC }}
           RSA_PRIVATE: ${{ secrets.RSA_PRIVATE }}
         run: |
-          echo "PKR_VAR_version={\"number\":\"$(cat VERSION.txt)\",\"type\":\"develop\",\"commit\":\"$GITHUB_SHA\"}" >> $GITHUB_ENV;
-          echo "PKR_VAR_workspace={\"name\":\"bounce\", \"project\":\"$WORKSPACE_PROJECT\", \"region\":\"europe-west1\"}" >> $GITHUB_ENV;
-          echo "PKR_VAR_machine={\"source_image_family\":\"debian-11\", \"rsa_keystore\":{\"public\":\"$RSA_PUBLIC\", \"private\":\"$RSA_PRIVATE\"}}" >> $GITHUB_ENV;
+          echo $CREDENTIALS | base64 --decode > ${{ env.GOOGLE_APPLICATION_CREDENTIALS }} &&\
+          echo "PKR_VAR_version={\"number\":\"$(cat VERSION.txt)\",\"type\":\"develop\",\"commit\":\"$GITHUB_SHA\"}" >> $GITHUB_ENV &&\
+          echo "PKR_VAR_workspace={\"name\":\"bounce\", \"project\":\"$WORKSPACE_PROJECT\", \"region\":\"europe-west1\"}" >> $GITHUB_ENV &&\
+          echo "PKR_VAR_machine={\"source_image_family\":\"debian-11\", \"rsa_keystore\":{\"public\":\"$RSA_PUBLIC\", \"private\":\"$RSA_PRIVATE\"}}" >> $GITHUB_ENV
       - name: Build Packer image
-        env:
-          PKR_VAR_skip_create_image: false
-        run: packer build -color=false .
-      - name: Fetch image name from manifest
-        run: cat manifest.json
+        run: |
+          packer build -color=false . &&\
+          rm -f ${{ env.GOOGLE_APPLICATION_CREDENTIALS }}
   clean:
     runs-on: ubuntu-20.04
     needs: [packer]
@@ -89,27 +82,25 @@ jobs:
         with:
           repository: RaphaeldeGail/probable-packer-infra
       - name: HashiCorp - Setup Terraform
-        uses: hashicorp/setup-terraform@v1.2.1
+        uses: hashicorp/setup-terraform@v2
         with:
           terraform_version: 1.1.2
           terraform_wrapper: true
-      - name: Create the backend configuration file
+      - name: Create secret configurations
         env:
           BACKEND_CONFIG: ${{ secrets.TF_BACKEND_CONFIG }}
-        run: |
-          echo $BACKEND_CONFIG | base64 --decode > config.bucket.tfbackend
-      - name: Create GCP authentication key.json
-        env:
           CREDENTIALS: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
-        run: echo $CREDENTIALS | base64 --decode > ${{ env.GOOGLE_CREDENTIALS }}
-      - name: Initialize Terraform working directory
-        run: terraform init -reconfigure -no-color -backend-config=config.bucket.tfbackend
-      - name: Set environment variables
-        env:
           WORKSPACE_PROJECT: ${{ secrets.WORKSPACE_PROJECT}}
         run: |
-          echo "TF_VAR_workspace={\"name\":\"bounce\", \"project\":\"$WORKSPACE_PROJECT\", \"region\":\"europe-west1\"}" >> $GITHUB_ENV;
-      - name: Plan infrastructure destroy
-        run: terraform plan -no-color -destroy -out destroy.out
-      - name: Apply infrastructure destruction
-        run: terraform apply -no-color destroy.out
+          echo $BACKEND_CONFIG | base64 --decode > config.bucket.tfbackend &&\
+          echo $CREDENTIALS | base64 --decode > ${{ env.GOOGLE_CREDENTIALS }} &&\
+          echo "TF_VAR_workspace={\"name\":\"bounce\", \"project\":\"$WORKSPACE_PROJECT\", \"region\":\"europe-west1\"}" >> $GITHUB_ENV
+      - name: Initialize Terraform working directory
+        run: terraform init -reconfigure -no-color -backend-config=config.bucket.tfbackend
+        run: terraform plan -destroy -no-color -out plan.out
+      - name: Apply infrastructure update
+        id: apply
+        run: |
+          terraform apply -no-color plan.out && \
+          rm -f plan.out && \
+          rm -f config.bucket.tfbackend
