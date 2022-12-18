@@ -33,6 +33,7 @@ jobs:
           echo "TF_VAR_workspace={\"name\":\"bounce\", \"project\":\"$WORKSPACE_PROJECT\", \"region\":\"europe-west1\"}" >> $GITHUB_ENV
       - name: Initialize Terraform working directory
         run: terraform init -reconfigure -no-color -backend-config=config.bucket.tfbackend
+      - name: Plan infrastructure update
         run: terraform plan -no-color -out plan.out
       - name: Apply infrastructure update
         id: apply
@@ -97,6 +98,7 @@ jobs:
           echo "TF_VAR_workspace={\"name\":\"bounce\", \"project\":\"$WORKSPACE_PROJECT\", \"region\":\"europe-west1\"}" >> $GITHUB_ENV
       - name: Initialize Terraform working directory
         run: terraform init -reconfigure -no-color -backend-config=config.bucket.tfbackend
+      - name: Plan infrastructure update
         run: terraform plan -destroy -no-color -out plan.out
       - name: Apply infrastructure update
         id: apply
