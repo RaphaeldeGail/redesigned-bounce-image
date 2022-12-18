@@ -81,7 +81,9 @@ jobs:
         id: manifest
         run: |
           cat manifest.json
-          echo "MANIFEST=$(cat manifest.json)" >> $GITHUB_OUTPUT
+          echo 'MANIFEST<<EOF' >> $GITHUB_OUTPUT
+          cat manifest.json >> $GITHUB_OUTPUT
+          echo 'EOF' >> $GITHUB_OUTPUT
   clean:
     runs-on: ubuntu-20.04
     needs: [packer]
