@@ -48,7 +48,7 @@ jobs:
   packer:
     runs-on: ubuntu-20.04
     outputs:
-      manifest: ${{ steps.manifest.outputs.MANIFEST }}
+      manifest: ${{ steps.manifest.outputs.manifest }}
     container:
       image: raphaeldegail/packer:1.8.0
     needs: [terrabuild]
@@ -80,8 +80,7 @@ jobs:
       - name: Fetch image name from manifest
         id: manifest
         run: |
-          cat manifest.json
-          echo -e 'MANIFEST<<EOF\n' >> $GITHUB_OUTPUT
+          echo -e 'manifest<<EOF\n' >> $GITHUB_OUTPUT
           cat manifest.json >> $GITHUB_OUTPUT
           echo -e '\nEOF' >> $GITHUB_OUTPUT
   clean:
