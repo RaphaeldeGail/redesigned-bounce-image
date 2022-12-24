@@ -67,19 +67,23 @@ jobs:
           RSA_PUBLIC: ${{ secrets.RSA_PUBLIC }}
           RSA_PRIVATE: ${{ secrets.RSA_PRIVATE }}
         run: |
-          echo $CREDENTIALS | base64 --decode > ${{ env.GOOGLE_APPLICATION_CREDENTIALS }} &&\
-          echo "PKR_VAR_version={\"number\":\"$(cat VERSION.txt)\",\"type\":\"develop\",\"commit\":\"$GITHUB_SHA\"}" >> $GITHUB_ENV &&\
-          echo "PKR_VAR_workspace={\"name\":\"bounce\", \"project\":\"$WORKSPACE_PROJECT\", \"region\":\"europe-west1\"}" >> $GITHUB_ENV &&\
+          echo $CREDENTIALS | base64 --decode > ${{ env.GOOGLE_APPLICATION_CREDENTIALS }}
+          echo "PKR_VAR_version={\"number\":\"$(cat VERSION.txt)\",\"type\":\"develop\",\"commit\":\"$GITHUB_SHA\"}" >> $GITHUB_ENV
+          echo "PKR_VAR_workspace={\"name\":\"bounce\", \"project\":\"$WORKSPACE_PROJECT\", \"region\":\"europe-west1\"}" >> $GITHUB_ENV
           echo "PKR_VAR_machine={\"source_image_family\":\"debian-11\", \"rsa_keystore\":{\"public\":\"$RSA_PUBLIC\", \"private\":\"$RSA_PRIVATE\"}}" >> $GITHUB_ENV
       - name: Build Packer image
         env:
           PKR_VAR_skip_create_image: false
         run: |
-          packer build -color=false . &&\
+          packer build -color=false .
           rm -f ${{ env.GOOGLE_APPLICATION_CREDENTIALS }}
       - name: Fetch image name from manifest
         id: manifest
         run: |
+          if [ ! -f manifest.json ]; then
+            echo 'no file manifest.json'
+            ls -lRth .
+          fi
           echo -e 'manifest<<EOF\n' >> $GITHUB_OUTPUT
           cat manifest.json >> $GITHUB_OUTPUT
           echo -e '\nEOF' >> $GITHUB_OUTPUT
@@ -128,7 +132,7 @@ jobs:
     if: ${{ success() && needs.packer.outputs.manifest }}
     env:
       GOOGLE_APPLICATION_CREDENTIALS: key.json
-      MANIFEST: ${{ needs.packer.outputs.manifest }}
+      IMAGE: ${{ fromJSON(needs.packer.outputs.manifest).builds[0].artifact_id }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -141,13 +145,12 @@ jobs:
         env:
           PROJECT: ${{ secrets.WORKSPACE_PROJECT }}
         run: |
-          gcloud auth activate-service-account 'workspace-workstation-v1@workspace-workstation-v1-7p6l.iam.gserviceaccount.com' --key-file=import.json;
-          gcloud compute images create \
-          "${{ fromJSON($MANIFEST).builds[0].artifact_id }}" \
-          --source-image="${{ fromJSON($MANIFEST).builds[0].artifact_id }}" \
+          gcloud auth activate-service-account 'workspace-workstation-v1@workspace-workstation-v1-7p6l.iam.gserviceaccount.com' --key-file=import.json
+          gcloud compute images create $IMAGE \
+          --source-image=$IMAGE \
           --family="bounce-debian-11" \
           --labels version=$(cat VERSION.txt),type=release,commit=$GITHUB_SHA \
           --source-image-project=workspace-workstation-v1-7p6l \
-          --project=workspace-workstation-v1-7p6l;
-          gcloud auth revoke 'workspace-workstation-v1@workspace-workstation-v1-7p6l.iam.gserviceaccount.com';
+          --project=workspace-workstation-v1-7p6l
+          gcloud auth revoke 'workspace-workstation-v1@workspace-workstation-v1-7p6l.iam.gserviceaccount.com'
           rm -f import.json
