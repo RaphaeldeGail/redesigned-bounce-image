@@ -140,13 +140,4 @@ jobs:
         env:
           PROJECT: ${{ secrets.WORKSPACE_PROJECT }}
         run: |
-          gcloud auth activate-service-account 'workspace-workstation-v1@workspace-workstation-v1-7p6l.iam.gserviceaccount.com' --key-file=import.json;
-          # gcloud compute images create \
-          # "${{ fromJSON(needs.packer.outputs.manifest).builds[0].artifact_id }}" \
-          # --source-image="${{ fromJSON(needs.packer.outputs.manifest).builds[0].artifact_id }}" \
-          # --family="bounce-debian-11" \
-          # --labels version=$(cat VERSION.txt),type=release,commit=$GITHUB_SHA \
-          # --source-image-project=workspace-workstation-v1-7p6l \
-          # --project=workspace-workstation-v1-7p6l;
-          gcloud auth revoke 'workspace-workstation-v1@workspace-workstation-v1-7p6l.iam.gserviceaccount.com';
           rm -f import.json
