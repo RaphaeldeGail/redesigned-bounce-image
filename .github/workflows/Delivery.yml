@@ -80,13 +80,19 @@ jobs:
       - name: Fetch image name from manifest
         id: manifest
         run: |
+          ls -lRth .
+          cat manifest.json
           if [ ! -f manifest.json ]; then
             echo 'no file manifest.json'
-            ls -lRth .
           fi
           echo -e 'manifest<<EOF\n' >> $GITHUB_OUTPUT
           cat manifest.json >> $GITHUB_OUTPUT
           echo -e '\nEOF' >> $GITHUB_OUTPUT
+      - name: Get OUTPUT
+        run: |
+          cat <<EOF
+          "${{ steps.manifest.outputs.manifest }}"
+          EOF
   clean:
     runs-on: ubuntu-20.04
     needs: [packer]
