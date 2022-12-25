@@ -48,9 +48,7 @@ jobs:
   packer:
     runs-on: ubuntu-20.04
     outputs:
-      manifesti: ${{ steps.manifesto.outputs.manifest }}
-    container:
-      image: raphaeldegail/packer:1.8.0
+      manifest: ${{ steps.manifest.outputs.manifest }}
     needs: [terrabuild]
     if: needs.terrabuild.outputs.exitcode == 0
     env:
@@ -58,6 +56,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+      - name: Setup `packer`
+        uses: hashicorp/setup-packer@main
+        with:
+          version: "1.8.0"
       - name: Initialize packer with plugins
         run: packer init .
       - name: Create GCP authentication key.json
@@ -78,7 +80,7 @@ jobs:
           packer build -color=false .
           rm -f ${{ env.GOOGLE_APPLICATION_CREDENTIALS }}
       - name: Fetch image name from manifest
-        id: manifesto
+        id: manifest
         run: |
           echo -e 'manifest<<EOF\n' >> $GITHUB_OUTPUT
           cat manifest.json >> $GITHUB_OUTPUT
@@ -86,7 +88,7 @@ jobs:
       - name: Get OUTPUT
         run: |
           cat <<EOF
-          "${{ steps.manifesto.outputs.manifest }}"
+          "${{ steps.manifest.outputs.manifest }}"
           EOF
   clean:
     runs-on: ubuntu-20.04
@@ -130,10 +132,10 @@ jobs:
     container:
       image: google/cloud-sdk:411.0.0-slim
     needs: [packer]
-    if: ${{ success() && needs.packer.outputs.manifesti }}
+    if: ${{ success() && needs.packer.outputs.manifest }}
     env:
       GOOGLE_APPLICATION_CREDENTIALS: key.json
-      IMAGE: ${{ fromJSON(needs.packer.outputs.manifesti).builds[0].artifact_id }}
+      IMAGE: ${{ fromJSON(needs.packer.outputs.manifest).builds[0].artifact_id }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
