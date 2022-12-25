@@ -136,6 +136,9 @@ jobs:
     env:
       GOOGLE_APPLICATION_CREDENTIALS: key.json
       IMAGE: ${{ fromJSON(needs.packer.outputs.manifest).builds[0].artifact_id }}
+      FAMILY: ${{ fromJSON(needs.packer.outputs.manifest).builds[0].custom_data.family }}
+      VERSION: ${{ fromJSON(needs.packer.outputs.manifest).builds[0].custom_data.version }}
+      COMMIT: ${{ fromJSON(needs.packer.outputs.manifest).builds[0].custom_data.commit }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -151,8 +154,8 @@ jobs:
           gcloud auth activate-service-account 'workspace-workstation-v1@workspace-workstation-v1-7p6l.iam.gserviceaccount.com' --key-file=import.json
           gcloud compute images create $IMAGE \
           --source-image=$IMAGE \
-          --family="bounce-debian-11" \
-          --labels version=$(cat VERSION.txt),type=release,commit=$GITHUB_SHA \
+          --family=$FAMILY \
+          --labels version=$VERSION,type=release,commit=$COMMIT \
           --source-image-project=workspace-workstation-v1-7p6l \
           --project=workspace-workstation-v1-7p6l
           gcloud auth revoke 'workspace-workstation-v1@workspace-workstation-v1-7p6l.iam.gserviceaccount.com'

@@ -58,6 +58,11 @@ build {
   post-processors {
     post-processor "manifest" {
       output = "manifest.json"
+      custom_data = {
+        family  = source.googlecompute.custom.image_family
+        version = source.googlecompute.custom.image_labels.version
+        commit  = source.googlecompute.custom.image_labels.commit
+      }
     }
   }
 }
