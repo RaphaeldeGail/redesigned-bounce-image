@@ -11,7 +11,7 @@ jobs:
       PKR_VAR_machine: "{source_image_family=\"source\", rsa_keystore={private=\"private\", public=\"public\"}}"
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Read version
         run: |
           echo "PKR_VAR_version={\"number\":\"$(cat VERSION.txt)\",\"type\":\"develop\",\"commit\":\"$GITHUB_SHA\"}" >> $GITHUB_ENV
