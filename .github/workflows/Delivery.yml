@@ -48,7 +48,7 @@ jobs:
   packer:
     runs-on: ubuntu-20.04
     outputs:
-      manifest: ${{ steps.manifest.outputs.manifest }}
+      manifesti: ${{ steps.manifesto.outputs.manifest }}
     container:
       image: raphaeldegail/packer:1.8.0
     needs: [terrabuild]
@@ -78,20 +78,15 @@ jobs:
           packer build -color=false .
           rm -f ${{ env.GOOGLE_APPLICATION_CREDENTIALS }}
       - name: Fetch image name from manifest
-        id: manifest
+        id: manifesto
         run: |
-          ls -lRth .
-          cat manifest.json
-          if [ ! -f manifest.json ]; then
-            echo 'no file manifest.json'
-          fi
           echo -e 'manifest<<EOF\n' >> $GITHUB_OUTPUT
           cat manifest.json >> $GITHUB_OUTPUT
           echo -e '\nEOF' >> $GITHUB_OUTPUT
       - name: Get OUTPUT
         run: |
           cat <<EOF
-          "${{ steps.manifest.outputs.manifest }}"
+          "${{ steps.manifesto.outputs.manifest }}"
           EOF
   clean:
     runs-on: ubuntu-20.04
@@ -135,10 +130,10 @@ jobs:
     container:
       image: google/cloud-sdk:411.0.0-slim
     needs: [packer]
-    if: ${{ success() && needs.packer.outputs.manifest }}
+    if: ${{ success() && needs.packer.outputs.manifesti }}
     env:
       GOOGLE_APPLICATION_CREDENTIALS: key.json
-      IMAGE: ${{ fromJSON(needs.packer.outputs.manifest).builds[0].artifact_id }}
+      IMAGE: ${{ fromJSON(needs.packer.outputs.manifesti).builds[0].artifact_id }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
