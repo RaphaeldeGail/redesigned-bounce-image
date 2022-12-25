@@ -22,15 +22,6 @@ source "googlecompute" "custom" {
   zone                            = "${var.workspace.region}-b"
   skip_create_image               = var.skip_create_image
 
-  image_name        = join("-", [var.workspace.name, local.unique_version, var.machine.source_image_family])
-  image_description = "SSH customized image for bounce usage, based on ${var.machine.source_image_family}"
-  image_family      = join("-", [var.workspace.name, var.machine.source_image_family])
-  image_labels = {
-    version      = local.formatted_version
-    version_type = var.version.type
-    commit       = var.version.commit
-  }
-
   machine_type = "e2-micro"
   network      = "${var.workspace.name}-network"
   subnetwork   = "${var.workspace.name}-subnet"
@@ -42,7 +33,17 @@ source "googlecompute" "custom" {
 
 build {
   name    = join("-", [var.workspace.name, "build", var.machine.source_image_family])
-  sources = ["sources.googlecompute.custom"]
+
+  source "googlecompute.custom" {
+    image_name        = join("-", [var.workspace.name, local.unique_version, var.machine.source_image_family])
+    image_description = "SSH customized image for bounce usage, based on ${var.machine.source_image_family}"
+    image_family      = join("-", [var.workspace.name, var.machine.source_image_family])
+    image_labels = {
+      version      = local.formatted_version
+      version_type = var.version.type
+      commit       = var.version.commit
+    }
+  }
 
   provisioner "shell" {
     environment_vars = [
@@ -59,9 +60,9 @@ build {
     post-processor "manifest" {
       output = "manifest.json"
       custom_data = {
-        family  = source.googlecompute.custom.image_family
-        version = source.googlecompute.custom.image_labels.version
-        commit  = source.googlecompute.custom.image_labels.commit
+        family  = join("-", [var.workspace.name, var.machine.source_image_family])
+        version = local.formatted_version
+        commit  = var.version.commit
       }
     }
   }
