@@ -142,16 +142,21 @@ jobs:
           IMPORT: ${{ secrets.GOOGLE_IMPORT_CREDENTIALS }}
         run: |
           echo $IMPORT | base64 --decode > import.json
+      - name: Install JSONquery package to export release data
+        run: |
+          sudo apt-get update && sudo apt-get install -y jq
+          echo "CLIENT_EMAIL=$(cat import.json | jq -r .client_email)" >> $GITHUB_ENV
+          echo "RELEASE_PROJECT=$(cat import.json | jq -r .project_id)" >> $GITHUB_ENV
       - name: Release image to definitive project
         env:
           PROJECT: ${{ secrets.WORKSPACE_PROJECT }}
         run: |
-          gcloud auth activate-service-account 'workspace-workstation-v1@workspace-workstation-v1-7p6l.iam.gserviceaccount.com' --key-file=import.json
+          gcloud auth activate-service-account $CLIENT_EMAIL --key-file=import.json
           gcloud compute images create $IMAGE \
           --source-image=$IMAGE \
           --family=$FAMILY \
           --labels version=$VERSION,type=release,commit=$COMMIT \
           --source-image-project=$PROJECT \
-          --project=workspace-workstation-v1-7p6l
-          gcloud auth revoke 'workspace-workstation-v1@workspace-workstation-v1-7p6l.iam.gserviceaccount.com'
+          --project=$RELEASE_PROJECT
+          gcloud auth revoke $CLIENT_EMAIL
           rm -f import.json
