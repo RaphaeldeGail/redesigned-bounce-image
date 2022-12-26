@@ -85,11 +85,6 @@ jobs:
           echo -e 'manifest<<EOF\n' >> $GITHUB_OUTPUT
           cat manifest.json >> $GITHUB_OUTPUT
           echo -e '\nEOF' >> $GITHUB_OUTPUT
-      - name: Get OUTPUT
-        run: |
-          cat <<EOF
-          "${{ steps.manifest.outputs.manifest }}"
-          EOF
   clean:
     runs-on: ubuntu-20.04
     needs: [packer]
@@ -147,7 +142,7 @@ jobs:
           IMPORT: ${{ secrets.GOOGLE_IMPORT_CREDENTIALS }}
         run: |
           echo $IMPORT | base64 --decode > import.json
-      - name: Test script
+      - name: Release image to definitive project
         env:
           PROJECT: ${{ secrets.WORKSPACE_PROJECT }}
         run: |
@@ -156,7 +151,7 @@ jobs:
           --source-image=$IMAGE \
           --family=$FAMILY \
           --labels version=$VERSION,type=release,commit=$COMMIT \
-          --source-image-project=workspace-workstation-v1-7p6l \
+          --source-image-project=$PROJECT \
           --project=workspace-workstation-v1-7p6l
           gcloud auth revoke 'workspace-workstation-v1@workspace-workstation-v1-7p6l.iam.gserviceaccount.com'
           rm -f import.json

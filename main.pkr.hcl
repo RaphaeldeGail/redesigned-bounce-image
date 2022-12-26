@@ -32,7 +32,7 @@ source "googlecompute" "custom" {
 }
 
 build {
-  name    = join("-", [var.workspace.name, "build", var.machine.source_image_family])
+  name = join("-", [var.workspace.name, "build", var.machine.source_image_family])
 
   source "googlecompute.custom" {
     image_name        = join("-", [var.workspace.name, local.unique_version, var.machine.source_image_family])
