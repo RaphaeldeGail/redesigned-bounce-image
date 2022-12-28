@@ -26,8 +26,8 @@ jobs:
       - name: Release image to definitive project
         run: |
           gcloud auth activate-service-account $CLIENT_EMAIL --key-file=import.json
-          gcloud compute images create bounce-$VERSION-$SHORT_COMMIT-debian-11 \
-          --source-image=bounce-$VERSION-debian-11 \
+          gcloud compute images create bounce-$VERSION-debian-11 \
+          --source-image=bounce-$VERSION-$SHORT_COMMIT-debian-11 \
           --family="bounce-debian-11" \
           --labels version=$VERSION,type=release,commit=$GITHUB_SHA \
           --source-image-project="${{ secrets.WORKSPACE_PROJECT }}" \
