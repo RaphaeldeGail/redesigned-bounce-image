@@ -1,10 +1,14 @@
 name: Build
 on:
+  pull_request:
+    types: [edited, opened, synchronize, reopened]
+    branches:
+      - 'main'
   push:
     branches:
       - 'develop'
 jobs:
-  terrabuild:
+  setup-infra:
     runs-on: ubuntu-20.04
     outputs:
       exitcode: ${{ steps.apply.outputs.exitcode }}
@@ -17,57 +21,54 @@ jobs:
         uses: actions/checkout@v3
         with:
           repository: RaphaeldeGail/probable-packer-infra
-      - name: HashiCorp - Setup Terraform
+      - name: Setup `terraform`
         uses: hashicorp/setup-terraform@v2
         with:
           terraform_version: 1.1.2
           terraform_wrapper: true
       - name: Create secret configurations
-        env:
-          BACKEND_CONFIG: ${{ secrets.TF_BACKEND_CONFIG }}
-          CREDENTIALS: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
-          WORKSPACE_PROJECT: ${{ secrets.WORKSPACE_PROJECT}}
         run: |
-          echo $BACKEND_CONFIG | base64 --decode > config.bucket.tfbackend &&\
-          echo $CREDENTIALS | base64 --decode > ${{ env.GOOGLE_CREDENTIALS }} &&\
-          echo "TF_VAR_workspace={\"name\":\"bounce\", \"project\":\"$WORKSPACE_PROJECT\", \"region\":\"europe-west1\"}" >> $GITHUB_ENV
+          echo "${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}" | base64 --decode > ${{ env.GOOGLE_CREDENTIALS }}
       - name: Initialize Terraform working directory
-        run: terraform init -reconfigure -no-color -backend-config=config.bucket.tfbackend
+        run: terraform init -reconfigure -no-color -backend-config="bucket=${{ secrets.WORKSPACE_PROJECT }}" -backend-config="prefix=terraform/state/packer-infra"
       - name: Plan infrastructure update
+        env:
+          TF_VAR_workspace: "{name=\"bounce\", project=\"${{ secrets.WORKSPACE_PROJECT }}\", region=\"europe-west1\"}"
         run: terraform plan -no-color -out plan.out
       - name: Apply infrastructure update
         id: apply
         run: |
           terraform apply -no-color plan.out &&\
-          rm -f plan.out &&\
-          rm -f config.bucket.tfbackend
-  packer:
+          rm -f plan.out
+  image:
     runs-on: ubuntu-20.04
-    container:
-      image: raphaeldegail/packer:1.8.0
-    needs: [terrabuild]
-    if: needs.terrabuild.outputs.exitcode == 0
+    needs: [setup-infra]
+    if: needs.setup-infra.outputs.exitcode == 0
     env:
       GOOGLE_APPLICATION_CREDENTIALS: key.json
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+      - name: Setup `packer`
+        uses: hashicorp/setup-packer@main
+        with:
+          version: "1.8.0"
       - name: Initialize packer with plugins
+        env:
+          # Allow to increase the number of call for github repositories for initialization.
+          PACKER_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: packer init .
       - name: Create GCP authentication key.json
-        env:
-          CREDENTIALS: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
-          WORKSPACE_PROJECT: ${{ secrets.WORKSPACE_PROJECT}}
-          RSA_PUBLIC: ${{ secrets.RSA_PUBLIC }}
-          RSA_PRIVATE: ${{ secrets.RSA_PRIVATE }}
         run: |
-          echo $CREDENTIALS | base64 --decode > ${{ env.GOOGLE_APPLICATION_CREDENTIALS }} &&\
-          echo "PKR_VAR_version={\"number\":\"$(cat VERSION.txt)\",\"type\":\"develop\",\"commit\":\"$GITHUB_SHA\"}" >> $GITHUB_ENV &&\
-          echo "PKR_VAR_workspace={\"name\":\"bounce\", \"project\":\"$WORKSPACE_PROJECT\", \"region\":\"europe-west1\"}" >> $GITHUB_ENV &&\
-          echo "PKR_VAR_machine={\"source_image_family\":\"debian-11\", \"rsa_keystore\":{\"public\":\"$RSA_PUBLIC\", \"private\":\"$RSA_PRIVATE\"}}" >> $GITHUB_ENV
+          echo "${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}" | base64 --decode > ${{ env.GOOGLE_APPLICATION_CREDENTIALS }} &&\
+          echo "PKR_VAR_version={\"number\":\"$(cat VERSION.txt)\",\"type\":\"develop\",\"commit\":\"$GITHUB_SHA\"}" >> $GITHUB_ENV
       - name: Build Packer image
+        env:
+          PKR_VAR_skip_create_image: ${{ github.event_name != 'pull_request' }}
+          PKR_VAR_workspace: "{name=\"bounce\", project=\"${{ secrets.WORKSPACE_PROJECT }}\", region=\"europe-west1\"}"
+          PKR_VAR_machine: "{source_image_family=\"debian-11\", rsa_keystore={public=\"${{ secrets.RSA_PUBLIC }}\", private=\"${{ secrets.RSA_PRIVATE }}\"}}"
         run: |
-          packer build -color=false . &&\
+          packer build -color=false .
           rm -f ${{ env.GOOGLE_APPLICATION_CREDENTIALS }}
   clean:
     runs-on: ubuntu-20.04
@@ -82,27 +83,21 @@ jobs:
         uses: actions/checkout@v3
         with:
           repository: RaphaeldeGail/probable-packer-infra
-      - name: HashiCorp - Setup Terraform
+      - name: Setup `terraform`
         uses: hashicorp/setup-terraform@v2
         with:
           terraform_version: 1.1.2
           terraform_wrapper: true
       - name: Create secret configurations
-        env:
-          BACKEND_CONFIG: ${{ secrets.TF_BACKEND_CONFIG }}
-          CREDENTIALS: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
-          WORKSPACE_PROJECT: ${{ secrets.WORKSPACE_PROJECT}}
         run: |
-          echo $BACKEND_CONFIG | base64 --decode > config.bucket.tfbackend &&\
-          echo $CREDENTIALS | base64 --decode > ${{ env.GOOGLE_CREDENTIALS }} &&\
-          echo "TF_VAR_workspace={\"name\":\"bounce\", \"project\":\"$WORKSPACE_PROJECT\", \"region\":\"europe-west1\"}" >> $GITHUB_ENV
+          echo "${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}" | base64 --decode > ${{ env.GOOGLE_CREDENTIALS }}
       - name: Initialize Terraform working directory
-        run: terraform init -reconfigure -no-color -backend-config=config.bucket.tfbackend
-      - name: Plan infrastructure update
-        run: terraform plan -destroy -no-color -out plan.out
-      - name: Apply infrastructure update
-        id: apply
+        run: terraform init -reconfigure -no-color -backend-config="bucket=${{ secrets.WORKSPACE_PROJECT }}" -backend-config="prefix=terraform/state/packer-infra"
+      - name: Plan infrastructure destruction
+        env:
+          TF_VAR_workspace: "{name=\"bounce\", project=\"${{ secrets.WORKSPACE_PROJECT }}\", region=\"europe-west1\"}"
+        run: terraform plan -no-color -out plan.out
+      - name: Apply infrastructure destruction
         run: |
-          terraform apply -no-color plan.out && \
-          rm -f plan.out && \
-          rm -f config.bucket.tfbackend
+          terraform apply -no-color plan.out
+          rm -f plan.out
