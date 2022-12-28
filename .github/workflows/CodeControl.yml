@@ -6,7 +6,6 @@ on:
 jobs:
   quality:
     runs-on: ubuntu-20.04
-    env:
     steps:
       - name: Checkout source code
         uses: actions/checkout@v3

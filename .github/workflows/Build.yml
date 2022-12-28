@@ -4,9 +4,6 @@ on:
     types: [edited, opened, synchronize, reopened]
     branches:
       - 'main'
-  push:
-    branches:
-      - 'develop'
 jobs:
   setup-infra:
     runs-on: ubuntu-20.04
@@ -72,7 +69,7 @@ jobs:
           rm -f ${{ env.GOOGLE_APPLICATION_CREDENTIALS }}
   clean:
     runs-on: ubuntu-20.04
-    needs: [packer]
+    needs: [image]
     if: ${{ always() }}
     env:
       TF_IN_AUTOMATION: "true"
