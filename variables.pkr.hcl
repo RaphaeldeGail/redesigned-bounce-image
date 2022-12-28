@@ -33,6 +33,28 @@ variable "machine" {
   }
 }
 
+variable "version" {
+  type = object({
+    number = string
+    type   = string
+    commit = string
+  })
+  description = "The version number and type, *develop* or *release*, for the image. The sha256 of the underlying commit complements the version."
+
+  validation {
+    condition     = var.version.type == "develop" || var.version.type == "release"
+    error_message = "The version type can either be develop or release."
+  }
+  validation {
+    condition     = can(regex("^v[0-9]?[0-9]?[0-9].[0-9]?[0-9]?[0-9].[0-9]?[0-9]?[0-9]$", var.version.number))
+    error_message = "The version number should be in the form vX.Y.Z with X, Y and Z numerals with at most three digits each."
+  }
+  validation {
+    condition     = var.version.commit != ""
+    error_message = "The version commit can not be empty."
+  }
+}
+
 variable "skip_create_image" {
   type        = bool
   default     = true
