@@ -30,6 +30,6 @@ jobs:
           --labels version=$VERSION,type=release,commit=$GITHUB_SHA \
           --source-image-project="${{ secrets.WORKSPACE_PROJECT }}" \
           --project=$RELEASE_PROJECT
-          gcloud compute images delete bounce-$VERSION-$SHORT_COMMIT-debian-11 --project=$PROJECT
+          gcloud compute images delete bounce-$VERSION-$SHORT_COMMIT-debian-11 --project="${{ secrets.WORKSPACE_PROJECT }}"
           gcloud auth revoke $CLIENT_EMAIL
           rm -f import.json
