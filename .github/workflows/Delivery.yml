@@ -20,7 +20,7 @@ jobs:
           echo "CLIENT_EMAIL=$(cat import.json | jq -r .client_email)" >> $GITHUB_ENV
           echo "RELEASE_PROJECT=$(cat import.json | jq -r .project_id)" >> $GITHUB_ENV
           echo "VERSION=$(cat VERSION.txt | sed -e 's/\./-/g')" >> $GITHUB_ENV
-          echo "SHORT_COMMIT=$(echo \"${{ github.event.pull_request.head.sha }}\" | cut -z -c1-10)" >> $GITHUB_ENV
+          echo "SHORT_COMMIT=$(echo ${{ github.event.pull_request.head.sha }} | cut -z -c1-10)" >> $GITHUB_ENV
       - name: Release image to definitive project
         run: |
           gcloud auth activate-service-account $CLIENT_EMAIL --key-file=import.json
