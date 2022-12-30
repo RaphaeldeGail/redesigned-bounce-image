@@ -58,7 +58,7 @@ jobs:
       - name: Create GCP authentication key.json
         run: |
           echo "${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}" | base64 --decode > ${{ env.GOOGLE_APPLICATION_CREDENTIALS }} &&\
-          echo "PKR_VAR_version={\"number\":\"$(cat VERSION.txt)\",\"type\":\"develop\",\"commit\":\"$GITHUB_SHA\"}" >> $GITHUB_ENV
+          echo "PKR_VAR_version={\"number\":\"$(cat VERSION.txt)\",\"type\":\"develop\",\"commit\":\"${{ github.event.pull_request.head.sha }}\"}" >> $GITHUB_ENV
       - name: Build Packer image
         env:
           PKR_VAR_skip_create_image: ${{ github.event_name != 'pull_request' }}
